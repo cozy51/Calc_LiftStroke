@@ -27,13 +27,37 @@ const fieldGroups: { title: string; description: string; fields: Field[] }[] = [
 const fields = fieldGroups.flatMap((group) => group.fields)
 const format = (value: number) => value.toLocaleString('ja-JP', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
+const variableDefinitions: Record<string, string> = {
+  'def-initialDiameter': 'D₀：ベルトを巻く前のドラム外径',
+  'def-beltThickness': 't：ベルト1層の厚さ',
+  'def-maxTurns': 'N：ドラムへ巻き取る最大回数',
+  'def-remainingStroke': 'Sₙ：最大巻き時にも残すストローク',
+  'def-gearRatio': 'i：モータ軸角度をドラム軸角度で割った比率',
+  'def-angle-per-turn': 'Δθ：ドラム1回転に相当する360°',
+  'def-n': 'n：結果を求める現在の巻き数',
+  'def-k': 'k：ベルト長さを合計するときに使う巻き数',
+  'def-pi': 'π：円周率',
+  'def-outer-diameter': 'Dout(n)：n巻時のベルト外側の直径',
+  'def-center-diameter': 'Dc(n)：n巻目のベルト中心線における直径',
+  'def-belt-length': 'L(n)：n巻目のベルト中心径から求めた円周',
+  'def-stroke': 'S(n)：n巻時の昇降位置',
+  'def-initial-angle': 'θ₀：残りストロークから自動計算する初期回転角',
+  'def-drum-angle': 'θdrum(n)：n巻時までのドラム軸累積回転角',
+  'def-motor-angle': 'θmotor(n)：ドラム軸回転角にギア比を掛けた値',
+  'def-max-stroke': 'Smax：ベルトを最も繰り出したときのストローク',
+  'def-min-stroke': 'Smin：最大巻き上げ時に残るストローク',
+  'def-stroke-range': 'ΔS：実際に使用できる昇降範囲',
+  'def-max-motor': 'θmotor,max：最大ストロークに必要なモータ回転角',
+}
+
 function VariableLink({ target, children }: { target: string; children: ReactNode }) {
   const showDefinition = () => {
     const definition = document.getElementById(target)
     const details = definition?.closest('details')
     if (details) details.open = true
   }
-  return <a className="variable-link" href={`#${target}`} onClick={showDefinition}>{children}</a>
+  const definition = variableDefinitions[target]
+  return <a className="variable-link" href={`#${target}`} onClick={showDefinition} data-definition={definition} title={definition} aria-label={`${String(children)}。${definition}`}>{children}</a>
 }
 
 function validate(values: Record<InputKey, string>) {
@@ -95,14 +119,14 @@ function TurnChart({ rows }: { rows: CalculationRow[] }) {
 }
 
 function FormulaGuide({ initialDrumAngle }: { initialDrumAngle?: number }) {
-  const formulas = [
-    ['巻き外径', 'Dout(k) = D₀ + 2kt', '巻き数に応じたベルト外側の直径'],
-    ['ベルト中心径', 'Dc(k) = D₀ + (2k − 1)t', 'ベルト長さを求める中心線の直径'],
-    ['1巻当たりの長さ', 'L(k) = π × Dc(k)', '中心径の円周から1巻分の長さを算出'],
-    ['昇降ストローク', 'S(n) = Sₙ + π(N − n){D₀ + t(N + n − 2)}', 'L(k)を合計して残りストロークへ加算'],
-    ['ドラム初期回転角', 'θ₀ = Sₙ ÷ {π × Dc(N)} × Δθ', '残りストロークを角度へ換算'],
-    ['ドラム軸回転角', 'θdrum(n) = θ₀ + Δθ(N − n)', '巻き数差分の角度を加算'],
-    ['モータ軸回転角', 'θmotor(n) = i × θdrum(n)', 'ドラム角度へギア比を乗算'],
+  const formulas: [string, ReactNode, string][] = [
+    ['巻き外径', <><VariableLink target="def-outer-diameter">Dout(k)</VariableLink> = <VariableLink target="def-initialDiameter">D₀</VariableLink> + 2<VariableLink target="def-k">k</VariableLink><VariableLink target="def-beltThickness">t</VariableLink></>, '巻き数に応じたベルト外側の直径'],
+    ['ベルト中心径', <><VariableLink target="def-center-diameter">Dc(k)</VariableLink> = <VariableLink target="def-initialDiameter">D₀</VariableLink> + (2<VariableLink target="def-k">k</VariableLink> − 1)<VariableLink target="def-beltThickness">t</VariableLink></>, 'ベルト長さを求める中心線の直径'],
+    ['1巻当たりの長さ', <><VariableLink target="def-belt-length">L(k)</VariableLink> = <VariableLink target="def-pi">π</VariableLink> × <VariableLink target="def-center-diameter">Dc(k)</VariableLink></>, '中心径の円周から1巻分の長さを算出'],
+    ['昇降ストローク', <><VariableLink target="def-stroke">S(n)</VariableLink> = <VariableLink target="def-remainingStroke">Sₙ</VariableLink> + <VariableLink target="def-pi">π</VariableLink>(<VariableLink target="def-maxTurns">N</VariableLink> − <VariableLink target="def-n">n</VariableLink>)&#123;<VariableLink target="def-initialDiameter">D₀</VariableLink> + <VariableLink target="def-beltThickness">t</VariableLink>(<VariableLink target="def-maxTurns">N</VariableLink> + <VariableLink target="def-n">n</VariableLink> − 2)&#125;</>, 'L(k)を合計して残りストロークへ加算'],
+    ['ドラム初期回転角', <><VariableLink target="def-initial-angle">θ₀</VariableLink> = <VariableLink target="def-remainingStroke">Sₙ</VariableLink> ÷ &#123;<VariableLink target="def-pi">π</VariableLink> × <VariableLink target="def-center-diameter">Dc(N)</VariableLink>&#125; × <VariableLink target="def-angle-per-turn">Δθ</VariableLink></>, '残りストロークを角度へ換算'],
+    ['ドラム軸回転角', <><VariableLink target="def-drum-angle">θdrum(n)</VariableLink> = <VariableLink target="def-initial-angle">θ₀</VariableLink> + <VariableLink target="def-angle-per-turn">Δθ</VariableLink>(<VariableLink target="def-maxTurns">N</VariableLink> − <VariableLink target="def-n">n</VariableLink>)</>, '巻き数差分の角度を加算'],
+    ['モータ軸回転角', <><VariableLink target="def-motor-angle">θmotor(n)</VariableLink> = <VariableLink target="def-gearRatio">i</VariableLink> × <VariableLink target="def-drum-angle">θdrum(n)</VariableLink></>, 'ドラム角度へギア比を乗算'],
   ]
   return <details className="panel formula"><summary><div><span className="section-kicker">必要な場合に確認</span><h2>計算式・計算方法</h2></div><ChevronDown/></summary><div className="formula-list">{formulas.map(([name, formula, note], index) => <div key={name}><span>{index+1}</span><div><b>{name}</b><code>{formula}</code><small>{note}</small></div></div>)}</div>{initialDrumAngle !== undefined && <div className="calculated-value"><span>現在の入力から自動計算</span><b>θ₀ = {format(initialDrumAngle)} deg</b></div>}</details>
 }
@@ -131,7 +155,7 @@ export default function App() {
         <div className="table-scroll"><table className={showDetails?'detail-table':'basic-table'}><thead><tr><th>巻き数<small><VariableLink target="def-n">n</VariableLink></small></th>{showDetails&&<th>巻き外径<small><VariableLink target="def-outer-diameter">Dout(n)</VariableLink>［mm］</small></th>}<th>ベルト中心径<small><VariableLink target="def-center-diameter">Dc(n)</VariableLink>［mm］</small></th>{showDetails&&<th>1巻当たりの長さ<small><VariableLink target="def-belt-length">L(n)</VariableLink>［mm］</small></th>}<th>昇降ストローク<small><VariableLink target="def-stroke">S(n)</VariableLink>［mm］</small></th>{showDetails&&<th>ドラム軸回転角<small><VariableLink target="def-drum-angle">θdrum(n)</VariableLink>［deg］</small></th>}<th>モータ軸回転角<small><VariableLink target="def-motor-angle">θmotor(n)</VariableLink>［deg］</small></th></tr></thead><tbody>{displayedRows.map(r=><tr key={r.turn}><td><b>{r.turn}</b><small> 巻</small></td>{showDetails&&<td>{format(r.outerDiameter)}</td>}<td>{format(r.centerDiameter)}</td>{showDetails&&<td>{format(r.beltLength)}</td>}<td>{format(r.stroke)}</td>{showDetails&&<td>{format(r.drumAngle)}</td>}<td>{format(r.motorAngle)}</td></tr>)}</tbody></table></div>
       </section>
       <FormulaGuide initialDrumAngle={rows[0]?.drumAngle}/>
-      <details className="panel input-guide"><summary><div><span className="section-kicker">記号をクリックするとここへ移動します</span><h2>変数定義・詳しい説明</h2></div><ChevronDown/></summary><div className="parameter-notes"><dl>{fields.map(field=><div id={`def-${field.key}`} key={field.key}><dt><b>{field.symbol}</b>{field.label}</dt><dd>{field.help}</dd></div>)}<div id="def-angle-per-turn" className="calculated-note"><dt><b>Δθ</b>ドラム1巻当たりの回転角</dt><dd>入力値ではなく、1回転を表す360°の計算値です。</dd></div><div id="def-n"><dt><b>n</b>現在の巻き数</dt><dd>各行で結果を求める巻き数です。</dd></div><div id="def-outer-diameter"><dt><b>Dout(n)</b>巻き外径</dt><dd>n巻時のベルト外側の直径です。</dd></div><div id="def-center-diameter"><dt><b>Dc(n)</b>ベルト中心径</dt><dd>n巻目のベルト中心線における直径です。</dd></div><div id="def-belt-length"><dt><b>L(n)</b>1巻当たりのベルト長さ</dt><dd>n巻目のベルト中心径から求めた円周です。</dd></div><div id="def-stroke"><dt><b>S(n)</b>昇降ストローク</dt><dd>n巻時の昇降位置です。</dd></div><div id="def-drum-angle"><dt><b>θdrum(n)</b>ドラム軸回転角</dt><dd>n巻時までに必要なドラム軸の累積回転角です。</dd></div><div id="def-motor-angle"><dt><b>θmotor(n)</b>モータ軸回転角</dt><dd>ドラム軸回転角へギア比を掛けた値です。</dd></div><div id="def-max-stroke"><dt><b>Smax</b>最大ストローク</dt><dd>ベルトを最も繰り出したときのストロークです。</dd></div><div id="def-min-stroke"><dt><b>Smin</b>最小ストローク</dt><dd>最大巻き上げ時に残るストロークです。</dd></div><div id="def-stroke-range"><dt><b>ΔS</b>使用可能な昇降範囲</dt><dd>SmaxからSminを引いた値です。</dd></div><div id="def-max-motor"><dt><b>θmotor,max</b>最大モータ軸回転角</dt><dd>最大ストロークに必要なモータ回転角です。</dd></div><div className="calculated-note"><dt><b>θ₀</b>ドラム初期回転角</dt><dd>残りストロークと最大巻き時の中心径から自動計算します。</dd></div></dl></div></details>
+      <details className="panel input-guide"><summary><div><span className="section-kicker">記号をクリックするとここへ移動します</span><h2>変数定義・詳しい説明</h2></div><ChevronDown/></summary><div className="parameter-notes"><dl>{fields.map(field=><div id={`def-${field.key}`} key={field.key}><dt><b>{field.symbol}</b>{field.label}</dt><dd>{field.help}</dd></div>)}<div id="def-angle-per-turn" className="calculated-note"><dt><b>Δθ</b>ドラム1巻当たりの回転角</dt><dd>入力値ではなく、1回転を表す360°の計算値です。</dd></div><div id="def-n"><dt><b>n</b>現在の巻き数</dt><dd>各行で結果を求める巻き数です。</dd></div><div id="def-k"><dt><b>k</b>総和用の巻き数</dt><dd>ベルト長さを巻き数の範囲で合計するときに使う変数です。</dd></div><div id="def-pi"><dt><b>π</b>円周率</dt><dd>中心径から円周を求めるために使用します。</dd></div><div id="def-outer-diameter"><dt><b>Dout(n)</b>巻き外径</dt><dd>n巻時のベルト外側の直径です。</dd></div><div id="def-center-diameter"><dt><b>Dc(n)</b>ベルト中心径</dt><dd>n巻目のベルト中心線における直径です。</dd></div><div id="def-belt-length"><dt><b>L(n)</b>1巻当たりのベルト長さ</dt><dd>n巻目のベルト中心径から求めた円周です。</dd></div><div id="def-stroke"><dt><b>S(n)</b>昇降ストローク</dt><dd>n巻時の昇降位置です。</dd></div><div id="def-initial-angle" className="calculated-note"><dt><b>θ₀</b>ドラム初期回転角</dt><dd>残りストロークと最大巻き時の中心径から自動計算します。</dd></div><div id="def-drum-angle"><dt><b>θdrum(n)</b>ドラム軸回転角</dt><dd>n巻時までに必要なドラム軸の累積回転角です。</dd></div><div id="def-motor-angle"><dt><b>θmotor(n)</b>モータ軸回転角</dt><dd>ドラム軸回転角へギア比を掛けた値です。</dd></div><div id="def-max-stroke"><dt><b>Smax</b>最大ストローク</dt><dd>ベルトを最も繰り出したときのストロークです。</dd></div><div id="def-min-stroke"><dt><b>Smin</b>最小ストローク</dt><dd>最大巻き上げ時に残るストロークです。</dd></div><div id="def-stroke-range"><dt><b>ΔS</b>使用可能な昇降範囲</dt><dd>SmaxからSminを引いた値です。</dd></div><div id="def-max-motor"><dt><b>θmotor,max</b>最大モータ軸回転角</dt><dd>最大ストロークに必要なモータ回転角です。</dd></div></dl></div></details>
     </>:<div className="error-banner">入力内容を修正すると、計算結果が表示されます。</div>}
   </main><footer>昇降ストローク計算ツール <span>•</span> 計算はすべてブラウザ内で実行されます</footer></>
 }

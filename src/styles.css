@@ -18,3 +18,12 @@ th .variable-link{color:#d9edf8}
 .flow-chips .variable-link{color:#126f71}
 .parameter-notes [id]{scroll-margin-top:20px}
 .parameter-notes [id]:target{outline:3px solid #e9a64b;outline-offset:2px;background:#fff5df}
+
+/* 変数はホバー・キーボードフォーカスで定義をその場に表示する。 */
+.variable-link{position:relative;font-family:monospace;font-weight:700}
+.variable-link::after{position:absolute;z-index:20;bottom:calc(100% + 9px);left:50%;width:max-content;max-width:280px;padding:8px 10px;border:1px solid #b9cbd8;border-radius:6px;background:#173b5d;color:#fff;box-shadow:0 5px 16px #172b3f30;content:attr(data-definition);font-family:"Noto Sans JP","Yu Gothic",sans-serif;font-size:13px;font-weight:500;line-height:1.5;opacity:0;pointer-events:none;transform:translate(-50%,4px);transition:opacity .15s,transform .15s;white-space:normal}
+.variable-link::before{position:absolute;z-index:21;bottom:calc(100% + 4px);left:50%;border:5px solid transparent;border-top-color:#173b5d;content:"";opacity:0;pointer-events:none;transform:translateX(-50%)}
+.variable-link:hover::after,.variable-link:focus-visible::after,.variable-link:hover::before,.variable-link:focus-visible::before{opacity:1;transform:translate(-50%,0)}
+.variable-link:hover::before,.variable-link:focus-visible::before{transform:translateX(-50%)}
+.formula-list code .variable-link{color:#155f91;text-decoration-color:#6fa4c6}
+@media(max-width:600px){.variable-link::after{max-width:220px;font-size:12px}}
