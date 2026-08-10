@@ -26,4 +26,6 @@ th .variable-link{color:#d9edf8}
 .variable-link:hover::after,.variable-link:focus-visible::after,.variable-link:hover::before,.variable-link:focus-visible::before{opacity:1;transform:translate(-50%,0)}
 .variable-link:hover::before,.variable-link:focus-visible::before{transform:translateX(-50%)}
 .formula-list code .variable-link{color:#155f91;text-decoration-color:#6fa4c6}
+/* code要素のスクロール領域でツールチップが切れ、影だけが線状に残るのを防ぐ。 */
+.formula-list code{overflow:visible;white-space:normal}
 @media(max-width:600px){.variable-link::after{max-width:220px;font-size:12px}}
