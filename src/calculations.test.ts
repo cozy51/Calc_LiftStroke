@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { calculateRows, DEFAULT_INPUTS } from './calculations'
+import { calculateRows, DEFAULT_INPUTS, DRUM_ANGLE_PER_TURN } from './calculations'
 
 describe('calculateRows', () => {
   it('初期値の検算条件を満たす', () => {
@@ -33,7 +33,7 @@ describe('calculateRows', () => {
 
   it('ドラム初期回転角を残りストロークと最大巻き時の中心径から算出する', () => {
     const [maxTurnRow] = calculateRows(DEFAULT_INPUTS)
-    const expectedAngle = DEFAULT_INPUTS.remainingStroke / maxTurnRow.beltLength * DEFAULT_INPUTS.anglePerTurn
+    const expectedAngle = DEFAULT_INPUTS.remainingStroke / maxTurnRow.beltLength * DRUM_ANGLE_PER_TURN
 
     expect(maxTurnRow.drumAngle).toBeCloseTo(expectedAngle, 10)
   })

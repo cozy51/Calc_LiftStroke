@@ -4,7 +4,6 @@ export interface CalculatorInputs {
   maxTurns: number
   remainingStroke: number
   gearRatio: number
-  anglePerTurn: number
 }
 
 export interface CalculationRow {
@@ -23,8 +22,10 @@ export const DEFAULT_INPUTS: CalculatorInputs = {
   maxTurns: 15,
   remainingStroke: 145,
   gearRatio: 10,
-  anglePerTurn: 360,
 }
+
+/** ドラム1回転（1巻）に相当する角度。 */
+export const DRUM_ANGLE_PER_TURN = 360
 
 /** 入力値から、最大巻き数から1巻目までの計算結果を生成する純粋関数。 */
 export function calculateRows(input: CalculatorInputs): CalculationRow[] {
@@ -32,7 +33,7 @@ export function calculateRows(input: CalculatorInputs): CalculationRow[] {
   // 最大巻き時の残りストロークを、最大巻き時のベルト中心円周に対する回転角へ換算
   const maxTurnCenterDiameter = input.initialDiameter + (2 * input.maxTurns - 1) * input.beltThickness
   const initialDrumAngle = maxTurnCenterDiameter > 0
-    ? input.remainingStroke / (Math.PI * maxTurnCenterDiameter) * input.anglePerTurn
+    ? input.remainingStroke / (Math.PI * maxTurnCenterDiameter) * DRUM_ANGLE_PER_TURN
     : 0
   for (let turn = input.maxTurns; turn >= 1; turn -= 1) {
     // 巻き外径とベルト中心径
@@ -44,7 +45,7 @@ export function calculateRows(input: CalculatorInputs): CalculationRow[] {
     const stroke = input.remainingStroke + Math.PI * (input.maxTurns - turn) *
       (input.initialDiameter + input.beltThickness * (input.maxTurns + turn - 2))
     // 任意の1巻当たり回転角を反映したドラム・モータ軸角度
-    const drumAngle = initialDrumAngle + input.anglePerTurn * (input.maxTurns - turn)
+    const drumAngle = initialDrumAngle + DRUM_ANGLE_PER_TURN * (input.maxTurns - turn)
     rows.push({ turn, outerDiameter, centerDiameter, beltLength, stroke, drumAngle, motorAngle: input.gearRatio * drumAngle })
   }
   return rows
