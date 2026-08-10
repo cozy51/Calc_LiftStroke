@@ -3,14 +3,29 @@ import { Calculator, ChevronDown, Download, RotateCcw } from 'lucide-react'
 import { calculateRows, DEFAULT_INPUTS, type CalculatorInputs, type CalculationRow } from './calculations'
 
 type InputKey = keyof CalculatorInputs
-const fields: { key: InputKey; label: string; symbol: string; unit: string; step: string }[] = [
-  { key: 'initialDiameter', label: 'ドラム初期径', symbol: 'D₀', unit: 'mm', step: '0.1' },
-  { key: 'beltThickness', label: 'ベルト厚さ', symbol: 't', unit: 'mm', step: '0.1' },
-  { key: 'maxTurns', label: '最大巻き数', symbol: 'N', unit: '巻', step: '1' },
-  { key: 'remainingStroke', label: '最大巻き時の残りストローク', symbol: 'Sₙ', unit: 'mm', step: '0.1' },
-  { key: 'gearRatio', label: 'ギア比', symbol: 'i', unit: '—', step: '0.1' },
-  { key: 'anglePerTurn', label: '1巻当たりの回転角', symbol: 'Δθ', unit: 'deg', step: '0.1' },
+type Field = { key: InputKey; label: string; symbol: string; unit: string; step: string; help: string }
+
+const fieldGroups: { title: string; description: string; fields: Field[] }[] = [
+  {
+    title: 'ドラム・ベルト条件', description: '巻き径と1巻当たりの移動量を決めます。', fields: [
+      { key: 'initialDiameter', label: 'ドラム初期径', symbol: 'D₀', unit: 'mm', step: '0.1', help: 'ベルトを巻く前のドラム外径です。' },
+      { key: 'beltThickness', label: 'ベルト厚さ', symbol: 't', unit: 'mm', step: '0.1', help: 'ベルト1層の厚さです。' },
+      { key: 'maxTurns', label: '最大巻き数', symbol: 'N', unit: '巻', step: '1', help: 'ドラムへ巻き取る最大回数です。' },
+    ],
+  },
+  {
+    title: '駆動条件', description: 'ドラム回転をモータ回転角へ換算します。', fields: [
+      { key: 'gearRatio', label: 'ギア比', symbol: 'i', unit: '—', step: '0.1', help: 'モータ軸角度 ÷ ドラム軸角度です。' },
+      { key: 'anglePerTurn', label: 'ドラム1巻当たりの回転角', symbol: 'Δθ', unit: 'deg', step: '0.1', help: '通常の1回転は360°です。半回転機構では180°などに変更します。' },
+    ],
+  },
+  {
+    title: 'ストローク条件', description: '巻き上げ後に残す昇降距離を指定します。', fields: [
+      { key: 'remainingStroke', label: '最大巻き時の残りストローク', symbol: 'Sₙ', unit: 'mm', step: '0.1', help: '最大まで巻いた状態でも残しておくストロークです。' },
+    ],
+  },
 ]
+const fields = fieldGroups.flatMap((group) => group.fields)
 const format = (value: number) => value.toLocaleString('ja-JP', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
 function validate(values: Record<InputKey, string>) {
@@ -31,90 +46,84 @@ function validate(values: Record<InputKey, string>) {
   return errors
 }
 
-function ResultChart({ rows }: { rows: CalculationRow[] }) {
-  const width = 800, height = 340, left = 82, right = 28, top = 25, bottom = 58
-  const xValues = rows.map(r => r.stroke), yValues = rows.map(r => r.motorAngle)
-  const minX = Math.min(...xValues), maxX = Math.max(...xValues), minY = Math.min(...yValues), maxY = Math.max(...yValues)
-  const x = (v: number) => left + (v - minX) / (maxX - minX || 1) * (width - left - right)
-  const y = (v: number) => height - bottom - (v - minY) / (maxY - minY || 1) * (height - top - bottom)
-  const points = [...rows].reverse().map(r => `${x(r.stroke)},${y(r.motorAngle)}`).join(' ')
-  return <div className="chart-scroll"><svg className="chart" viewBox={`0 0 ${width} ${height}`} role="img" aria-label="昇降ストロークとモータ軸回転角のグラフ">
-    {[0, .25, .5, .75, 1].map(p => { const yy = top + p * (height - top - bottom); const value = maxY - p * (maxY - minY); return <g key={`y${p}`}><line x1={left} x2={width-right} y1={yy} y2={yy} className="grid"/><text x={left-12} y={yy+4} textAnchor="end">{Math.round(value).toLocaleString()}</text></g> })}
-    {[0, .25, .5, .75, 1].map(p => { const xx = left + p * (width-left-right); const value = minX + p * (maxX-minX); return <g key={`x${p}`}><line x1={xx} x2={xx} y1={top} y2={height-bottom} className="grid"/><text x={xx} y={height-bottom+23} textAnchor="middle">{Math.round(value).toLocaleString()}</text></g> })}
+function MechanismOverview() {
+  return <section className="overview panel" aria-labelledby="overview-title">
+    <div className="overview-copy">
+      <span className="section-kicker">この計算で分かること</span>
+      <h2 id="overview-title">巻き径の変化を、ストロークとモータ回転角へ変換</h2>
+      <p>ベルトを巻くほどドラム径が大きくなり、1巻当たりの移動量も増えます。入力条件から、各巻き数の昇降位置と必要なモータ軸回転角を算出します。</p>
+      <div className="flow-chips"><span>巻き数 n</span><i>→</i><span>巻き径</span><i>→</i><span>ストローク S(n)</span><i>→</i><span>モータ角 θmotor(n)</span></div>
+    </div>
+    <svg className="mechanism" viewBox="0 0 520 230" role="img" aria-label="ドラム、ベルト、ギア、モータの関係を示す模式図">
+      <defs><marker id="flow-arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0L8 4 0 8Z" fill="#168b8d"/></marker></defs>
+      <circle cx="112" cy="112" r="72" className="wound-belt"/><circle cx="112" cy="112" r="48" className="drum"/><circle cx="112" cy="112" r="7" className="shaft"/>
+      <path d="M184 112c20 0 28 17 28 35v54" className="belt"/><rect x="186" y="190" width="52" height="30" rx="4" className="load"/>
+      <path d="M55 48a82 82 0 01109 2" className="turn-arrow" markerEnd="url(#flow-arrow)"/><text x="110" y="22" textAnchor="middle">巻き方向・巻き数 n</text>
+      <line x1="112" y1="64" x2="112" y2="160" className="measure"/><text x="98" y="106" textAnchor="end">D₀</text><text x="162" y="61">厚さ t</text>
+      <line x1="270" y1="72" x2="270" y2="200" className="measure"/><text x="282" y="137">昇降 S(n)</text>
+      <line x1="119" y1="112" x2="361" y2="112" className="drive-line"/><circle cx="384" cy="112" r="25" className="gear"/><circle cx="463" cy="112" r="32" className="motor"/>
+      <line x1="409" y1="112" x2="431" y2="112" className="drive-line"/><text x="384" y="76" textAnchor="middle">ギア比 i</text><text x="463" y="164" textAnchor="middle">モータ角</text><text x="463" y="181" textAnchor="middle">θmotor(n)</text>
+    </svg>
+  </section>
+}
+
+function TurnChart({ rows }: { rows: CalculationRow[] }) {
+  const ordered = [...rows].sort((a, b) => a.turn - b.turn)
+  const width = 800, height = 340, left = 80, right = 28, top = 25, bottom = 58
+  const maxTurn = Math.max(...ordered.map((row) => row.turn))
+  const minStroke = Math.min(...ordered.map((row) => row.stroke)), maxStroke = Math.max(...ordered.map((row) => row.stroke))
+  const x = (turn: number) => left + (turn - 1) / (maxTurn - 1 || 1) * (width - left - right)
+  const y = (stroke: number) => height - bottom - (stroke - minStroke) / (maxStroke - minStroke || 1) * (height - top - bottom)
+  const points = ordered.map((row) => `${x(row.turn)},${y(row.stroke)}`).join(' ')
+  return <div className="chart-scroll"><svg className="chart" viewBox={`0 0 ${width} ${height}`} role="img" aria-label="巻き数と昇降ストロークのグラフ">
+    {[0, .25, .5, .75, 1].map((p) => { const yy = top + p * (height-top-bottom); const value = maxStroke-p*(maxStroke-minStroke); return <g key={`y${p}`}><line x1={left} x2={width-right} y1={yy} y2={yy} className="grid"/><text x={left-12} y={yy+5} textAnchor="end">{Math.round(value).toLocaleString()}</text></g> })}
+    {ordered.map((row) => <line key={`x${row.turn}`} x1={x(row.turn)} x2={x(row.turn)} y1={top} y2={height-bottom} className={row.turn % Math.ceil(maxTurn/8) === 0 || row.turn === 1 ? 'grid' : 'minor-grid'}/>)}
     <polyline points={points} className="plot-line"/>
-    {rows.map(r => <circle key={r.turn} cx={x(r.stroke)} cy={y(r.motorAngle)} r="5" className="plot-point"><title>{`巻き数 n=${r.turn}：S(n) ${format(r.stroke)} mm / θmotor(n) ${format(r.motorAngle)} deg`}</title></circle>)}
-    <text x={(left+width-right)/2} y={height-8} textAnchor="middle" className="axis-label">昇降ストローク S(n)［mm］</text>
-    <text transform={`translate(18 ${(top+height-bottom)/2}) rotate(-90)`} textAnchor="middle" className="axis-label">モータ軸回転角 θmotor(n)［deg］</text>
+    {ordered.map((row) => <circle key={row.turn} cx={x(row.turn)} cy={y(row.stroke)} r="5" className="plot-point"><title>{`${row.turn}巻：ストローク ${format(row.stroke)} mm / 1巻長さ ${format(row.beltLength)} mm`}</title></circle>)}
+    {ordered.map((row) => (row.turn === 1 || row.turn === maxTurn || row.turn % Math.ceil(maxTurn/8) === 0) && <text key={`label${row.turn}`} x={x(row.turn)} y={height-bottom+24} textAnchor="middle">{row.turn}</text>)}
+    <text x={(left+width-right)/2} y={height-8} textAnchor="middle" className="axis-label">巻き数 n［巻］</text>
+    <text transform={`translate(18 ${(top+height-bottom)/2}) rotate(-90)`} textAnchor="middle" className="axis-label">昇降ストローク S(n)［mm］</text>
   </svg></div>
 }
 
-function InputGuide() {
-  return <details className="panel input-guide" open>
-    <summary>
-      <div><span className="eyebrow">PARAMETER GUIDE</span><h2>入力値の意味</h2></div>
-      <ChevronDown />
-    </summary>
-    <div className="guide-content">
-      <div className="parameter-notes">
-        <dl>
-          <div><dt><b>D₀</b> ドラム初期径</dt><dd>ベルトを巻く前の、ドラム芯の直径です。</dd></div>
-          <div><dt><b>t</b> ベルト厚さ</dt><dd>ベルト1層の厚さです。1巻ごとに外径が両側で厚くなります。</dd></div>
-          <div><dt><b>N</b> 最大巻き数</dt><dd>ドラムへ巻き取る最大の回数です。結果はN巻から1巻まで表示します。</dd></div>
-          <div><dt><b>Sₙ</b> 最大巻き時の残りストローク</dt><dd>N巻まで巻いた状態でも残しておく昇降距離です。</dd></div>
-          <div><dt><b>i</b> ギア比</dt><dd>ドラム軸角度に対するモータ軸角度の倍率です。</dd></div>
-          <div className="calculated-note"><dt><b>θ₀</b> ドラム初期回転角</dt><dd>入力値ではありません。Sₙと最大巻き時のベルト中心径から自動計算します。</dd></div>
-          <div><dt><b>Δθ</b> 1巻当たりの回転角</dt><dd>ドラムが1巻きする角度です。通常の1回転として初期値は360°です。</dd></div>
-        </dl>
-      </div>
-    </div>
-  </details>
-}
-
 function FormulaGuide({ initialDrumAngle }: { initialDrumAngle?: number }) {
-  return <details className="panel formula" open>
-    <summary>
-      <div><span className="eyebrow">CALCULATION PROCESS</span><h2>計算式</h2></div>
-      <ChevronDown />
-    </summary>
-    <div className="formula-intro">
-      <span className="step-number">01</span>
-      <p>入力値から各巻き数の径とベルト長さを求め、その累積値を昇降ストロークと軸回転角へ変換します。</p>
-    </div>
-    <div className="formula-grid">
-      <div><span className="formula-step">1</span><b>巻き外径</b><code>Dout(k) = D₀ + 2kt</code><small>巻き数に応じたベルト外側の直径</small></div>
-      <div><span className="formula-step">2</span><b>ベルト中心径</b><code>Dc(k) = D₀ + (2k − 1)t</code><small>ベルト長さを求めるための中心線の直径</small></div>
-      <div><span className="formula-step">3</span><b>1巻当たりの長さ</b><code>L(k) = π × Dc(k)</code><small>中心径の円周から1巻分の長さを算出</small></div>
-      <div><span className="formula-step">4</span><b>昇降ストローク</b><code>S(n) = Sₙ + π(N − n)&#123;D₀ + t(N + n − 2)&#125;</code><small>L(k)をk=nからN−1まで合計して残りストロークへ加算</small></div>
-      <div><span className="formula-step">5</span><b>ドラム初期回転角</b><code>θ₀ = Sₙ ÷ &#123;π × Dc(N)&#125; × Δθ</code><small>残りストロークを最大巻き時の中心円周に対する角度へ換算</small></div>
-      <div><span className="formula-step">6</span><b>ドラム軸回転角</b><code>θdrum(n) = θ₀ + Δθ(N − n)</code><small>計算した初期角度へ巻き数差分の角度を加算</small></div>
-      <div><span className="formula-step">7</span><b>モータ軸回転角</b><code>θmotor(n) = i × θdrum(n)</code><small>ドラム軸角度へギア比を乗算</small></div>
-    </div>
-    <div className="result-flow"><span>入力条件</span><i>→</i><span>径・長さ</span><i>→</i><span>ストローク</span><i>→</i><strong>計算結果</strong></div>
-    {initialDrumAngle !== undefined && <div className="calculated-value"><span>現在の入力から自動計算</span><b>θ₀ = {format(initialDrumAngle)} deg</b></div>}
-  </details>
+  const formulas = [
+    ['巻き外径', 'Dout(k) = D₀ + 2kt', '巻き数に応じたベルト外側の直径'],
+    ['ベルト中心径', 'Dc(k) = D₀ + (2k − 1)t', 'ベルト長さを求める中心線の直径'],
+    ['1巻当たりの長さ', 'L(k) = π × Dc(k)', '中心径の円周から1巻分の長さを算出'],
+    ['昇降ストローク', 'S(n) = Sₙ + π(N − n){D₀ + t(N + n − 2)}', 'L(k)を合計して残りストロークへ加算'],
+    ['ドラム初期回転角', 'θ₀ = Sₙ ÷ {π × Dc(N)} × Δθ', '残りストロークを角度へ換算'],
+    ['ドラム軸回転角', 'θdrum(n) = θ₀ + Δθ(N − n)', '巻き数差分の角度を加算'],
+    ['モータ軸回転角', 'θmotor(n) = i × θdrum(n)', 'ドラム角度へギア比を乗算'],
+  ]
+  return <details className="panel formula"><summary><div><span className="section-kicker">必要な場合に確認</span><h2>計算式・計算方法</h2></div><ChevronDown/></summary><div className="formula-list">{formulas.map(([name, formula, note], index) => <div key={name}><span>{index+1}</span><div><b>{name}</b><code>{formula}</code><small>{note}</small></div></div>)}</div>{initialDrumAngle !== undefined && <div className="calculated-value"><span>現在の入力から自動計算</span><b>θ₀ = {format(initialDrumAngle)} deg</b></div>}</details>
 }
 
 export default function App() {
   const defaults = Object.fromEntries(Object.entries(DEFAULT_INPUTS).map(([key, value]) => [key, String(value)])) as Record<InputKey, string>
   const [values, setValues] = useState(defaults)
+  const [showDetails, setShowDetails] = useState(false)
+  const [ascending, setAscending] = useState(false)
   const errors = useMemo(() => validate(values), [values])
   const valid = Object.keys(errors).length === 0
-  const rows = useMemo(() => valid ? calculateRows(Object.fromEntries(Object.entries(values).map(([k, v]) => [k, Number(v)])) as unknown as CalculatorInputs) : [], [valid, values])
+  const rows = useMemo(() => valid ? calculateRows(Object.fromEntries(Object.entries(values).map(([key, value]) => [key, Number(value)])) as unknown as CalculatorInputs) : [], [valid, values])
+  const displayedRows = ascending ? [...rows].reverse() : rows
   const summary = rows.length ? { maxStroke: Math.max(...rows.map(r => r.stroke)), minStroke: Math.min(...rows.map(r => r.stroke)), maxMotor: Math.max(...rows.map(r => r.motorAngle)) } : null
-  const downloadCsv = () => {
-    const header = ['巻き数 n','巻き外径 Dout(n) [mm]','ベルト中心径 Dc(n) [mm]','1巻当たりのベルト長さ L(n) [mm]','昇降ストローク S(n) [mm]','ドラム軸回転角 θdrum(n) [deg]','モータ軸回転角 θmotor(n) [deg]']
-    const csv = '\uFEFF' + [header, ...rows.map(r => [r.turn,r.outerDiameter,r.centerDiameter,r.beltLength,r.stroke,r.drumAngle,r.motorAngle])].map(line => line.join(',')).join('\n')
-    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' })); const a = document.createElement('a'); a.href=url; a.download='lift-stroke-results.csv'; a.click(); URL.revokeObjectURL(url)
-  }
-  return <><header><div className="header-inner"><div className="logo"><Calculator size={26}/></div><div><h1>昇降ストローク計算</h1><p>ドラム巻径とモータ軸回転角の関係</p></div></div></header>
-    <main><section className="panel"><div className="section-heading"><div><span className="eyebrow">INPUT PARAMETERS</span><h2>計算条件</h2></div><button className="secondary" onClick={() => setValues(defaults)}><RotateCcw size={16}/>初期値に戻す</button></div>
-      <div className="input-grid">{fields.map(field => <label key={field.key} className={errors[field.key] ? 'invalid' : ''}><span>{field.label} <small>{field.symbol}</small></span><div className="input-wrap"><input type="number" step={field.step} value={values[field.key]} onChange={e => setValues(v => ({...v, [field.key]: e.target.value}))} aria-describedby={`${field.key}-error`}/><b>{field.unit}</b></div>{errors[field.key] && <em id={`${field.key}-error`}>{errors[field.key]}</em>}</label>)}</div>
+  const downloadCsv = () => { const header = ['巻き数 n','巻き外径 Dout(n) [mm]','ベルト中心径 Dc(n) [mm]','1巻当たりの長さ L(n) [mm]','昇降ストローク S(n) [mm]','ドラム軸回転角 θdrum(n) [deg]','モータ軸回転角 θmotor(n) [deg]']; const csv = '\uFEFF'+[header,...displayedRows.map(r=>[r.turn,r.outerDiameter,r.centerDiameter,r.beltLength,r.stroke,r.drumAngle,r.motorAngle])].map(line=>line.join(',')).join('\n'); const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'})); const a=document.createElement('a'); a.href=url;a.download='lift-stroke-results.csv';a.click();URL.revokeObjectURL(url) }
+
+  return <><header><div className="header-inner"><div className="logo"><Calculator size={28}/></div><div><h1>昇降ストローク計算</h1><p>ドラム巻径とモータ軸回転角の関係</p></div></div></header><main>
+    <MechanismOverview/>
+    <section className="panel input-panel"><div className="section-heading"><div><span className="section-kicker">条件を入力</span><h2>入力条件</h2></div><button className="secondary" onClick={()=>setValues(defaults)}><RotateCcw size={18}/>初期値に戻す</button></div>
+      <div className="condition-groups">{fieldGroups.map(group=><fieldset key={group.title}><legend>{group.title}</legend><p>{group.description}</p><div className="group-fields">{group.fields.map(field=><label key={field.key} className={errors[field.key]?'invalid':''}><span>{field.label} <small>（{field.symbol}）</small></span><div className="input-wrap"><input type="number" step={field.step} value={values[field.key]} onChange={e=>setValues(v=>({...v,[field.key]:e.target.value}))}/><b>{field.unit}</b></div><small className="field-help">{field.help}</small>{errors[field.key]&&<em>{errors[field.key]}</em>}</label>)}</div></fieldset>)}</div>
     </section>
-    <InputGuide />
-    <FormulaGuide initialDrumAngle={rows[0]?.drumAngle} />
-    {summary ? <><section><span className="eyebrow">CALCULATION SUMMARY</span><h2>計算サマリー</h2><div className="summary-grid">
-      {[['最大昇降ストローク Smax',summary.maxStroke,'mm'],['最小昇降ストローク Smin',summary.minStroke,'mm'],['ストローク差 ΔS',summary.maxStroke-summary.minStroke,'mm'],['最大モータ軸回転角 θmotor,max',summary.maxMotor,'deg']].map(([label,value,unit],i) => <article className={`summary-card c${i}`} key={String(label)}><span>{label}</span><strong>{format(Number(value))}</strong><small>{unit}</small></article>)}</div></section>
-      <section className="panel"><div className="section-heading"><div><span className="eyebrow">RESULTS</span><h2>計算結果</h2></div><button className="primary" onClick={downloadCsv}><Download size={16}/>CSVダウンロード</button></div><div className="table-scroll"><table><thead><tr>{['巻き数 n','巻き外径 Dout(n)［mm］','ベルト中心径 Dc(n)［mm］','1巻当たりのベルト長さ L(n)［mm］','昇降ストローク S(n)［mm］','ドラム軸回転角 θdrum(n)［deg］','モータ軸回転角 θmotor(n)［deg］'].map(h=><th key={h}>{h}</th>)}</tr></thead><tbody>{rows.map(r => <tr key={r.turn}><td><b>{r.turn}</b><small> 巻</small></td>{[r.outerDiameter,r.centerDiameter,r.beltLength,r.stroke,r.drumAngle,r.motorAngle].map((v,i)=><td key={i}>{format(v)}</td>)}</tr>)}</tbody></table></div></section>
-      <section className="panel"><span className="eyebrow">RELATIONSHIP CHART</span><h2>ストロークとモータ軸回転角</h2><p className="hint">各点にカーソルを合わせると詳細を確認できます。</p><ResultChart rows={rows}/></section></> : <div className="error-banner">入力内容を修正すると、計算結果がここに表示されます。</div>}
-    </main><footer>昇降ストローク計算ツール <span>•</span> すべての計算はブラウザ内で実行されます</footer></>
+    {summary ? <>
+      <section className="results-summary"><span className="section-kicker">主要な計算結果</span><h2>この条件での昇降範囲</h2><div className="summary-layout"><article className="primary-result"><span>実際に使用できる昇降範囲 <small>（ΔS）</small></span><strong>{format(summary.maxStroke-summary.minStroke)}</strong><b>mm</b><p>最大ストロークと巻き上げ時の残りストロークの差です。</p></article><div className="summary-grid">{[['ベルトをすべて繰り出したときの最大ストローク','Smax',summary.maxStroke,'mm'],['最大巻き上げ時の残りストローク','Smin',summary.minStroke,'mm'],['最大ストロークに必要なモータ回転角','θmotor,max',summary.maxMotor,'deg']].map(([label,symbol,value,unit])=><article className="summary-card" key={String(symbol)}><span>{label}<small>（{symbol}）</small></span><strong>{format(Number(value))}</strong><b>{unit}</b></article>)}</div></div></section>
+      <section className="panel"><span className="section-kicker">巻き数による変化</span><h2>巻き数と昇降ストローク</h2><p className="section-description">ベルトを巻き取るにつれて、ストロークがどのように変化するかを示します。点にカーソルを合わせると詳細を確認できます。</p><TurnChart rows={rows}/></section>
+      <section className="panel"><div className="section-heading table-heading"><div><span className="section-kicker">巻き数ごとの数値</span><h2>計算表</h2></div><div className="table-actions"><button className="secondary" onClick={()=>setAscending(v=>!v)}>{ascending?'15巻 → 1巻':'1巻 → 15巻'}</button><button className="secondary" onClick={()=>setShowDetails(v=>!v)}>{showDetails?'基本表示':'詳細表示'}</button><button className="primary" onClick={downloadCsv}><Download size={18}/>CSV</button></div></div>
+        <div className="table-scroll"><table className={showDetails?'detail-table':'basic-table'}><thead><tr><th>巻き数<small>n</small></th>{showDetails&&<th>巻き外径<small>Dout(n)［mm］</small></th>}<th>ベルト中心径<small>Dc(n)［mm］</small></th>{showDetails&&<th>1巻当たりの長さ<small>L(n)［mm］</small></th>}<th>昇降ストローク<small>S(n)［mm］</small></th>{showDetails&&<th>ドラム軸回転角<small>θdrum(n)［deg］</small></th>}<th>モータ軸回転角<small>θmotor(n)［deg］</small></th></tr></thead><tbody>{displayedRows.map(r=><tr key={r.turn}><td><b>{r.turn}</b><small> 巻</small></td>{showDetails&&<td>{format(r.outerDiameter)}</td>}<td>{format(r.centerDiameter)}</td>{showDetails&&<td>{format(r.beltLength)}</td>}<td>{format(r.stroke)}</td>{showDetails&&<td>{format(r.drumAngle)}</td>}<td>{format(r.motorAngle)}</td></tr>)}</tbody></table></div>
+      </section>
+      <FormulaGuide initialDrumAngle={rows[0]?.drumAngle}/>
+      <details className="panel input-guide"><summary><div><span className="section-kicker">補足情報</span><h2>入力値の詳しい説明</h2></div><ChevronDown/></summary><div className="parameter-notes"><dl>{fields.map(field=><div key={field.key}><dt><b>{field.symbol}</b>{field.label}</dt><dd>{field.help}</dd></div>)}<div className="calculated-note"><dt><b>θ₀</b>ドラム初期回転角</dt><dd>残りストロークと最大巻き時の中心径から自動計算します。</dd></div></dl></div></details>
+    </>:<div className="error-banner">入力内容を修正すると、計算結果が表示されます。</div>}
+  </main><footer>昇降ストローク計算ツール <span>•</span> 計算はすべてブラウザ内で実行されます</footer></>
 }
