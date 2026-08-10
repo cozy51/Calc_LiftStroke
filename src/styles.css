@@ -16,3 +16,201 @@
 .startup-error h1 {
   font-size: 22px;
 }
+
+.input-guide {
+  padding: 0;
+}
+
+.input-guide summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 22px 25px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.input-guide summary::-webkit-details-marker {
+  display: none;
+}
+
+.input-guide summary svg {
+  transition: transform .2s ease;
+}
+
+.input-guide[open] summary svg {
+  transform: rotate(180deg);
+}
+
+.guide-content {
+  display: grid;
+  grid-template-columns: minmax(380px, 1.05fr) minmax(360px, .95fr);
+  gap: 30px;
+  padding: 10px 25px 25px;
+  border-top: 1px solid #e2e7ec;
+}
+
+.drum-diagram {
+  margin: 0;
+  padding: 15px;
+  border: 1px solid #dce5eb;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #f8fbfc, #f1f6f8);
+}
+
+.drum-diagram svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.drum-diagram figcaption {
+  color: #7a8794;
+  font-size: 10px;
+  text-align: center;
+}
+
+.diagram-ground { stroke: #9caab6; stroke-width: 2; }
+.belt-roll { fill: #b9dcdd; stroke: #148b8d; stroke-width: 3; }
+.drum-core { fill: #d7e0e7; stroke: #526b7f; stroke-width: 3; }
+.drum-shaft { fill: #173c5d; }
+.radius-line { stroke: #526b7f; stroke-width: 2; }
+.hanging-belt { fill: none; stroke: #148b8d; stroke-width: 10; }
+.load { fill: #f1a84c; stroke: #a96a20; stroke-width: 2; }
+.load-label { fill: #623b12; font: 600 12px sans-serif; }
+.dimension { stroke: #2876a8; stroke-width: 1.5; }
+.extension { stroke: #8ba1b2; stroke-width: 1; stroke-dasharray: 4 3; }
+.dimension-label { fill: #205e8b; font: 700 14px sans-serif; }
+.dimension-note { fill: #5f7485; font: 11px sans-serif; }
+.thickness-dimension, .rotation-arrow { fill: none; stroke: #148b8d; stroke-width: 1.5; }
+.teal-label { fill: #116f71; font: 600 12px sans-serif; }
+.motor { fill: #e7edf2; stroke: #536c81; stroke-width: 3; }
+.diagram-caption { fill: #536679; font: 600 12px sans-serif; }
+.shaft-link { stroke: #536c81; stroke-width: 6; }
+
+.parameter-notes dl {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin: 0;
+}
+
+.parameter-notes dl > div {
+  padding: 12px;
+  border-left: 3px solid #199698;
+  border-radius: 0 5px 5px 0;
+  background: #f4f8f9;
+}
+
+.parameter-notes dt {
+  color: #263b50;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.parameter-notes dt b {
+  display: inline-block;
+  min-width: 30px;
+  color: #147d80;
+  font: 700 13px monospace;
+}
+
+.parameter-notes dd {
+  margin: 5px 0 0;
+  color: #69798a;
+  font-size: 11px;
+  line-height: 1.65;
+}
+
+@media (max-width: 900px) {
+  .guide-content { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 560px) {
+  .input-guide summary { padding: 19px 16px; }
+  .guide-content { min-width: 0; padding: 10px 16px 19px; }
+  .drum-diagram { padding: 5px; overflow-x: auto; }
+  .drum-diagram svg { min-width: 520px; }
+  .parameter-notes dl { grid-template-columns: 1fr; }
+}
+
+.formula-intro {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 0;
+  padding: 18px 25px;
+  border-top: 1px solid #e2e7ec;
+  background: #f5f9fa;
+}
+
+.formula-intro p {
+  margin: 0;
+  color: #536679;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.step-number {
+  flex: 0 0 auto;
+  color: #148b8d;
+  font: 700 24px monospace;
+}
+
+.formula .formula-grid {
+  border-top: 0;
+}
+
+.formula-grid > div {
+  position: relative;
+  padding-left: 38px;
+}
+
+.formula-step {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: grid;
+  width: 26px;
+  height: 26px;
+  place-items: center;
+  border-radius: 50%;
+  background: #e1f1f1;
+  color: #147d80;
+  font: 700 12px monospace;
+}
+
+.formula-grid small {
+  display: block;
+  margin-top: 6px;
+  color: #718092;
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.result-flow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin: 0 25px 25px;
+  padding: 14px;
+  border-radius: 6px;
+  background: #173b5d;
+  color: #d4e0e9;
+  font-size: 12px;
+}
+
+.result-flow i {
+  color: #59c0c1;
+  font-style: normal;
+}
+
+.result-flow strong {
+  color: #fff;
+}
+
+@media (max-width: 560px) {
+  .formula-intro { padding: 16px; }
+  .result-flow { gap: 6px; margin: 0 16px 19px; font-size: 10px; }
+}

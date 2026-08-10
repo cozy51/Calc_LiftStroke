@@ -17,6 +17,13 @@ npm install
 npm run dev
 ```
 
+Windows PowerShellで`npm`の実行がスクリプト実行ポリシーにより拒否される場合は、次のように`npm.cmd`を使用してください。
+
+```powershell
+npm.cmd install
+npm.cmd run dev
+```
+
 通常は <http://localhost:5173/> で表示されます。ターミナルに別のURLが表示された場合は、そちらを開いてください。
 
 ### 画面が表示されない場合
@@ -58,7 +65,7 @@ Vercelのプロジェクト設定は次のとおりです。`vercel.json`に設�
 | Build Command | `npm run build` |
 | Output Directory | `dist` |
 | Install Command | `npm install`（Vercelのデフォルト） |
-| Node.js | 20.xまたは22.x |
+| Node.js | 20.x以上 |
 
 ### Git連携でデプロイする手順
 
