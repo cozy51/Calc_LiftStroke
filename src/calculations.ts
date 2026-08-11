@@ -3,6 +3,7 @@ export interface CalculatorInputs {
   beltThickness: number
   maxTurns: number
   remainingStroke: number
+  mechanismLength: number
   gearRatio: number
 }
 
@@ -21,6 +22,7 @@ export const DEFAULT_INPUTS: CalculatorInputs = {
   beltThickness: 1.2,
   maxTurns: 15,
   remainingStroke: 145,
+  mechanismLength: 317.68,
   gearRatio: 10,
 }
 
@@ -49,4 +51,11 @@ export function calculateRows(input: CalculatorInputs): CalculationRow[] {
     rows.push({ turn, outerDiameter, centerDiameter, beltLength, stroke, drumAngle, motorAngle: input.gearRatio * drumAngle })
   }
   return rows
+}
+
+/** 最大ストロークに機構内部を通る長さを加え、必要なベルト全長を求める。 */
+export function calculateTotalBeltLength(input: CalculatorInputs): number {
+  const rows = calculateRows(input)
+  const maximumStroke = rows.length > 0 ? Math.max(...rows.map((row) => row.stroke)) : 0
+  return maximumStroke + input.mechanismLength
 }

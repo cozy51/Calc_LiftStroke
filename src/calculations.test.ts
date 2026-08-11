@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { calculateRows, DEFAULT_INPUTS, DRUM_ANGLE_PER_TURN } from './calculations'
+import { calculateRows, calculateTotalBeltLength, DEFAULT_INPUTS, DRUM_ANGLE_PER_TURN } from './calculations'
 
 describe('calculateRows', () => {
   it('初期値の検算条件を満たす', () => {
@@ -42,5 +42,10 @@ describe('calculateRows', () => {
     const rows = calculateRows({ ...DEFAULT_INPUTS, initialDiameter: 0, beltThickness: 0 })
 
     expect(rows.flatMap((row) => Object.values(row)).every(Number.isFinite)).toBe(true)
+  })
+
+  it('最大ストロークと機構内長さから必要なベルト全長を算出する', () => {
+    expect(calculateTotalBeltLength(DEFAULT_INPUTS)).toBeCloseTo(3752.56, 1)
+    expect(calculateTotalBeltLength({ ...DEFAULT_INPUTS, mechanismLength: 0 })).toBeCloseTo(3434.88, 1)
   })
 })
