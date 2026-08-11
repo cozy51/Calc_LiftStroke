@@ -29,3 +29,18 @@ th .variable-link{color:#d9edf8}
 /* code要素のスクロール領域でツールチップが切れ、影だけが線状に残るのを防ぐ。 */
 .formula-list code{overflow:visible;white-space:normal}
 @media(max-width:600px){.variable-link::after{max-width:220px;font-size:12px}}
+
+/* グラフはブラウザ標準ではなく、他の変数表示と揃えた黒いツールチップを使う。 */
+.chart-tooltip{pointer-events:none}
+.chart-tooltip rect{fill:#17212b;stroke:#314252;stroke-width:1;filter:drop-shadow(0 4px 7px #172b3f40)}
+.chart .chart-tooltip text{fill:#fff;font-family:"Noto Sans JP","Yu Gothic",sans-serif;font-size:11px}
+.chart .chart-tooltip .tooltip-title{font-weight:700;fill:#fff}
+.plot-point:focus{outline:none;fill:#eea347;stroke:#b77328}
+
+/* 昇降ストロークは製図の寸法線と同様に、両矢印・引出線で示す。 */
+.extension-line{stroke:#8ba3b5;stroke-width:1;stroke-dasharray:4 3}
+.stroke-dimension{stroke:#327eaf;stroke-width:2}
+.leader-line{fill:none;stroke:#327eaf;stroke-width:1.5}
+.formula-list>div{position:relative;scroll-margin-top:20px}
+.formula-list>div>i[id]{position:absolute;top:0;left:0;scroll-margin-top:20px}
+.formula-list>div:target,.formula-list>div:has(>i:target){outline:3px solid #e9a64b;outline-offset:2px;background:#fff9ed}
