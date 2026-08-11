@@ -1,5 +1,5 @@
 import { useMemo, useState, type ReactNode } from 'react'
-import { Calculator, ChevronDown, Download, RotateCcw } from 'lucide-react'
+import { ChevronDown, Download, RotateCcw } from 'lucide-react'
 import { calculateRows, calculateTotalBeltLength, DEFAULT_INPUTS, DRUM_ANGLE_PER_TURN, type CalculatorInputs, type CalculationRow } from './calculations'
 
 type InputKey = keyof CalculatorInputs
@@ -232,7 +232,7 @@ export default function App() {
   const summary = rows.length ? { maxStroke: Math.max(...rows.map(r => r.stroke)), minStroke: Math.min(...rows.map(r => r.stroke)), maxMotor: Math.max(...rows.map(r => r.motorAngle)), totalBeltLength: calculateTotalBeltLength(numericInput) } : null
   const downloadCsv = () => { const header = ['巻き数 n','巻き外径 Dout(n) [mm]','ベルト中心径 Dc(n) [mm]','1巻当たりの長さ L(n) [mm]','昇降ストローク S(n) [mm]','ドラム軸回転角 θdrum(n) [deg]','モータ軸回転角 θmotor(n) [deg]']; const csv = '\uFEFF'+[header,...displayedRows.map(r=>[r.turn,r.outerDiameter,r.centerDiameter,r.beltLength,r.stroke,r.drumAngle,r.motorAngle])].map(line=>line.join(',')).join('\n'); const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'})); const a=document.createElement('a'); a.href=url;a.download='lift-stroke-results.csv';a.click();URL.revokeObjectURL(url) }
 
-  return <><header><div className="header-inner"><div className="logo"><Calculator size={28}/></div><div><h1>昇降ストローク計算</h1><p>ドラム巻径とモータ軸回転角の関係</p></div></div></header><main>
+  return <><header><div className="header-inner"><div className="logo"><img src="/logo-mark.svg" alt="" /></div><div><h1>昇降ストローク計算</h1><p>ドラム巻径とモータ軸回転角の関係</p></div></div></header><main>
     <MechanismOverview/>
     <section className="panel input-panel"><div className="section-heading"><div><span className="section-kicker">条件を入力</span><h2>入力条件</h2></div><button className="secondary" onClick={()=>setValues(defaults)}><RotateCcw size={18}/>初期値に戻す</button></div>
       <div className="condition-groups">{fieldGroups.map(group=><fieldset key={group.title}><legend>{group.title}</legend><p>{group.description}</p><div className="group-fields">{group.fields.map(field=><label key={field.key} className={errors[field.key]?'invalid':''}><span>{field.label} <small>（<VariableLink target={`def-${field.key}`}>{field.symbol}</VariableLink>）</small></span><div className="input-wrap"><input type="number" step={field.step} value={values[field.key]} onChange={e=>setValues(v=>({...v,[field.key]:e.target.value}))}/><b>{field.unit}</b></div><small className="field-help">{field.help}</small>{errors[field.key]&&<em>{errors[field.key]}</em>}</label>)}</div></fieldset>)}</div>
