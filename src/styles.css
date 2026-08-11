@@ -62,6 +62,25 @@ thead{position:relative;z-index:3}tbody{position:relative;z-index:1}
 .usage-count.terminal{background:#e8edf0;color:#667784}
 @media(max-width:600px){.definition-legend{padding:16px 16px 0}.usage-count{font-size:13px}}
 
+/* ログイン画面は、ヘッダーの配色と入力欄の意匠をそのまま流用する。 */
+.login-screen{display:grid;place-items:center;min-height:100vh;padding:24px}
+.login-card{width:100%;max-width:430px;overflow:hidden;border:1px solid #d8e1e8;border-radius:11px;background:#fff;box-shadow:0 6px 20px #17334e1a}
+.login-header{display:flex;align-items:center;gap:16px;padding:22px;border-bottom:4px solid #19a0a1;background:linear-gradient(115deg,#102f50,#17527c);color:#fff}
+.login-header h1{margin:0 0 4px;font-size:21px;letter-spacing:.03em}
+.login-header p{margin:0;color:#c8d8e5;font-size:13px}
+.login-header .logo{width:52px;height:52px}
+.login-header .logo img{width:44px;height:44px}
+.login-form{display:grid;gap:18px;padding:24px}
+.login-lead{margin:0;color:#65788a;font-size:14px;line-height:1.7}
+.login-form label>span{display:block;margin-bottom:8px;font-size:16px;font-weight:700}
+.login-form .input-wrap input{font-family:inherit;font-size:17px;font-weight:600}
+.login-form .primary{width:100%;padding:13px;font-size:15px}
+.login-error{margin:0;padding:12px 14px;border:1px solid #ecc5c9;border-radius:8px;background:#fff4f5;color:#9c303b;font-size:14px}
+/* ヘッダー右端のログアウトは、濃色背景に馴染む半透明のボタンにする。 */
+.header-logout{display:inline-flex;flex:0 0 auto;align-items:center;gap:7px;margin-left:auto;padding:10px 14px;border:1px solid #ffffff59;border-radius:7px;background:#ffffff1f;color:#fff;font-size:14px;font-weight:700;white-space:nowrap;cursor:pointer}
+.header-logout:hover{background:#ffffff33}
+@media(max-width:600px){.login-screen{padding:16px}.login-form{padding:20px 16px;gap:16px}.header-logout{padding:8px 10px;font-size:13px}.header-logout svg{width:16px;height:16px}}
+
 .numeric-substitution{margin-top:12px;padding:12px 14px;border-left:4px solid #d28a2e;border-radius:5px;background:#fff8ec}
 .numeric-substitution>span{display:block;margin-bottom:7px;color:#86591c;font-size:12px;font-weight:700}
 .formula-list .numeric-substitution code{margin:0;padding:0;background:transparent;color:#603f18;font-size:16px;font-weight:700;line-height:1.6}
