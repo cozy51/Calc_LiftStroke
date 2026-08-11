@@ -56,10 +56,10 @@ const variableDefinitions: Record<string, string> = {
   'formula-initial-angle': '【計算式】\nθ₀ = Sₙ ÷ {π × Dc(N)} × Δθ\n残りストロークを角度へ換算',
   'formula-drum-angle': '【計算式】\nθdrum(n) = θ₀ + Δθ(N − n)\n巻き数差分の角度を加算',
   'formula-motor-angle': '【計算式】\nθmotor(n) = i × θdrum(n)\nドラム角度へギア比を乗算',
-  'formula-max-stroke': '【計算式】\nSmax = max S(n)\n全巻き数の昇降ストロークから最大値を選択',
-  'formula-min-stroke': '【計算式】\nSmin = min S(n)\n全巻き数の昇降ストロークから最小値を選択',
-  'formula-stroke-range': '【計算式】\nΔS = Smax − Smin\n最大値と最小値の差から使用可能範囲を算出',
-  'formula-max-motor': '【計算式】\nθmotor,max = max θmotor(n)\n全巻き数のモータ軸回転角から最大値を選択',
+  'formula-max-stroke': '【計算式】\nSmax = S(1)\n1巻時の昇降ストロークを最大値として使用',
+  'formula-min-stroke': '【計算式】\nSmin = S(N) = Sₙ\n最大巻き時の残りストロークを最小値として使用',
+  'formula-stroke-range': '【計算式】\nΔS = S(1) − S(N)\n1巻時と最大巻き時のストローク差を算出',
+  'formula-max-motor': '【計算式】\nθmotor,max = θmotor(1)\n1巻時のモータ軸回転角を最大値として使用',
 }
 
 function VariableLink({ target, children }: { target: string; children: ReactNode }) {
@@ -100,12 +100,11 @@ function MechanismOverview() {
     </div>
     <svg className="mechanism" viewBox="0 0 520 230" role="img" aria-label="ドラム、ベルト、ギア、モータの関係を示す模式図">
       <defs>
-        <marker id="flow-arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0L8 4 0 8Z" fill="#168b8d"/></marker>
         <marker id="dimension-arrow" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto-start-reverse"><path d="M0 0L8 4 0 8Z" fill="#327eaf"/></marker>
       </defs>
       <circle cx="112" cy="112" r="72" className="wound-belt"/><circle cx="112" cy="112" r="48" className="drum"/><circle cx="112" cy="112" r="7" className="shaft"/>
       <path d="M184 112c20 0 28 17 28 35v54" className="belt"/><rect x="186" y="190" width="52" height="30" rx="4" className="load"/>
-      <path d="M55 48a82 82 0 01109 2" className="turn-arrow" markerEnd="url(#flow-arrow)"/><text x="110" y="22" textAnchor="middle">巻き方向・巻き数 n</text>
+      <text x="110" y="22" textAnchor="middle">巻き数 n</text>
       <line x1="112" y1="64" x2="112" y2="160" className="measure"/><text x="98" y="106" textAnchor="end">D₀</text><text x="162" y="61">厚さ t</text>
       <line x1="212" y1="112" x2="282" y2="112" className="extension-line"/>
       <line x1="238" y1="205" x2="282" y2="205" className="extension-line"/>
@@ -150,8 +149,12 @@ function FormulaGuide() {
     ['formula-initial-angle', 'ドラム初期回転角', <><VariableLink target="formula-initial-angle">θ₀</VariableLink> = <VariableLink target="def-remainingStroke">Sₙ</VariableLink> ÷ &#123;<VariableLink target="def-pi">π</VariableLink> × <VariableLink target="formula-center-diameter">Dc(N)</VariableLink>&#125; × <VariableLink target="formula-angle-per-turn">Δθ</VariableLink></>, '残りストロークを角度へ換算'],
     ['formula-drum-angle', 'ドラム軸回転角', <><VariableLink target="formula-drum-angle">θdrum(n)</VariableLink> = <VariableLink target="formula-initial-angle">θ₀</VariableLink> + <VariableLink target="formula-angle-per-turn">Δθ</VariableLink>(<VariableLink target="def-maxTurns">N</VariableLink> − <VariableLink target="def-n">n</VariableLink>)</>, '巻き数差分の角度を加算'],
     ['formula-motor-angle', 'モータ軸回転角', <><VariableLink target="formula-motor-angle">θmotor(n)</VariableLink> = <VariableLink target="def-gearRatio">i</VariableLink> × <VariableLink target="formula-drum-angle">θdrum(n)</VariableLink></>, 'ドラム角度へギア比を乗算'],
+    ['formula-max-stroke', '最大ストローク', <><VariableLink target="formula-max-stroke">Smax</VariableLink> = <VariableLink target="formula-stroke">S(1)</VariableLink></>, '1巻時の昇降ストロークを最大値として使用'],
+    ['formula-min-stroke', '最小ストローク', <><VariableLink target="formula-min-stroke">Smin</VariableLink> = <VariableLink target="formula-stroke">S(N)</VariableLink> = <VariableLink target="def-remainingStroke">Sₙ</VariableLink></>, '最大巻き時の残りストロークを最小値として使用'],
+    ['formula-stroke-range', '使用可能な昇降範囲', <><VariableLink target="formula-stroke-range">ΔS</VariableLink> = <VariableLink target="formula-stroke">S(1)</VariableLink> − <VariableLink target="formula-stroke">S(N)</VariableLink></>, '1巻時と最大巻き時のストローク差を算出'],
+    ['formula-max-motor', '最大モータ軸回転角', <><VariableLink target="formula-max-motor">θmotor,max</VariableLink> = <VariableLink target="formula-motor-angle">θmotor(1)</VariableLink></>, '1巻時のモータ軸回転角を最大値として使用'],
   ]
-  return <details className="panel formula"><summary><div><span className="section-kicker">必要な場合に確認</span><h2>計算式・計算方法</h2></div><ChevronDown/></summary><div className="formula-list">{formulas.map(([id, name, formula, note], index) => <div id={id} key={id}>{id === 'formula-stroke' && <><i id="formula-max-stroke"/><i id="formula-min-stroke"/><i id="formula-stroke-range"/></>}{id === 'formula-motor-angle' && <i id="formula-max-motor"/>}<span>{index+1}</span><div><b>{name}</b><code>{formula}</code><small>{note}</small></div></div>)}</div></details>
+  return <details className="panel formula"><summary><div><span className="section-kicker">必要な場合に確認</span><h2>計算式・計算方法</h2></div><ChevronDown/></summary><div className="formula-list">{formulas.map(([id, name, formula, note], index) => <div id={id} key={id}><span>{index+1}</span><div><b>{name}</b><code>{formula}</code><small>{note}</small></div></div>)}</div></details>
 }
 
 function DefinitionGuide() {
@@ -174,7 +177,7 @@ function DefinitionGuide() {
     ['def-stroke-range', 'ΔS', '使用可能な昇降範囲', 'SmaxからSminを引いた値です。', 'formula-stroke-range'],
     ['def-max-motor', 'θmotor,max', '最大モータ軸回転角', '最大ストロークに必要なモータ回転角です。', 'formula-max-motor'],
   ]
-  const card = ([id, symbol, label, description, formulaTarget]: string[], kind: string) => <div id={id} className={`definition-card ${kind}`} key={id}><dt><b>{symbol}</b>{label}</dt><dd>{description}</dd>{formulaTarget && <VariableLink target={formulaTarget}>計算式を見る</VariableLink>}</div>
+  const card = ([id, symbol, label, description, formulaTarget]: string[], kind: string) => <div id={id} className={`definition-card ${kind}`} key={id}><dt><b>{formulaTarget ? <VariableLink target={formulaTarget}>{symbol}</VariableLink> : symbol}</b>{label}</dt><dd>{description}</dd></div>
 
   return <details className="panel input-guide"><summary><div><span className="section-kicker">暖色＝入力・紫＝定数・寒色＝計算値</span><h2>変数定義・詳しい説明</h2></div><ChevronDown/></summary><div className="definition-legend"><span className="input-key">入力値</span><span className="constant-key">定数・添字</span><span className="calculated-key">計算値</span></div><div className="parameter-notes"><dl>{fields.map((field) => card([`def-${field.key}`, field.symbol, field.label, field.help, ''], 'input-definition'))}{constants.map((item) => card(item, 'constant-definition'))}{calculated.map((item) => card(item, 'calculated-definition'))}</dl></div></details>
 }
