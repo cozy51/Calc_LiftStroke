@@ -1,8 +1,6 @@
 import { useMemo, useState, type ReactNode } from 'react'
-import { ChevronDown, Download, LogOut, RotateCcw } from 'lucide-react'
+import { ChevronDown, Download, RotateCcw } from 'lucide-react'
 import { calculateRows, calculateTotalBeltLength, DEFAULT_INPUTS, DRUM_ANGLE_PER_TURN, type CalculatorInputs, type CalculationRow } from './calculations'
-import { clearLogin, isLoggedIn } from './auth'
-import LoginScreen from './LoginScreen'
 
 type InputKey = keyof CalculatorInputs
 type Field = { key: InputKey; label: string; symbol: string; unit: string; step: string; help: string }
@@ -221,7 +219,7 @@ function DefinitionGuide() {
   return <details className="panel input-guide"><summary><div><span className="section-kicker">暖色＝入力・紫＝定数・寒色＝計算値</span><h2>変数定義・詳しい説明</h2></div><ChevronDown/></summary><div className="definition-legend"><span className="input-key">入力値</span><span className="constant-key">定数・添字</span><span className="calculated-key">計算値</span></div><div className="parameter-notes"><dl>{fields.map((field) => card([`def-${field.key}`, field.symbol, field.label, field.help, ''], 'input-definition'))}{constants.map((item) => card(item, 'constant-definition'))}{calculated.map((item) => card(item, 'calculated-definition'))}</dl></div></details>
 }
 
-function Calculator({ onLogout }: { onLogout: () => void }) {
+export default function App() {
   const defaults = Object.fromEntries(Object.entries(DEFAULT_INPUTS).map(([key, value]) => [key, String(value)])) as Record<InputKey, string>
   const [values, setValues] = useState(defaults)
   const [showDetails, setShowDetails] = useState(false)
@@ -234,7 +232,7 @@ function Calculator({ onLogout }: { onLogout: () => void }) {
   const summary = rows.length ? { maxStroke: Math.max(...rows.map(r => r.stroke)), minStroke: Math.min(...rows.map(r => r.stroke)), maxMotor: Math.max(...rows.map(r => r.motorAngle)), totalBeltLength: calculateTotalBeltLength(numericInput) } : null
   const downloadCsv = () => { const header = ['巻き数 n','巻き外径 Dout(n) [mm]','ベルト中心径 Dc(n) [mm]','1巻当たりの長さ L(n) [mm]','昇降ストローク S(n) [mm]','ドラム軸回転角 θdrum(n) [deg]','モータ軸回転角 θmotor(n) [deg]']; const csv = '\uFEFF'+[header,...displayedRows.map(r=>[r.turn,r.outerDiameter,r.centerDiameter,r.beltLength,r.stroke,r.drumAngle,r.motorAngle])].map(line=>line.join(',')).join('\n'); const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'})); const a=document.createElement('a'); a.href=url;a.download='lift-stroke-results.csv';a.click();URL.revokeObjectURL(url) }
 
-  return <><header><div className="header-inner"><div className="logo"><img src="/logo-mark.svg" alt="" /></div><div><h1>昇降ストローク計算</h1><p>ドラム巻径とモータ軸回転角の関係</p></div><button type="button" className="header-logout" onClick={onLogout}><LogOut size={18}/>ログアウト</button></div></header><main>
+  return <><header><div className="header-inner"><div className="logo"><img src="/logo-mark.svg" alt="" /></div><div><h1>昇降ストローク計算</h1><p>ドラム巻径とモータ軸回転角の関係</p></div></div></header><main>
     <MechanismOverview/>
     <section className="panel input-panel"><div className="section-heading"><div><span className="section-kicker">条件を入力</span><h2>入力条件</h2></div><button className="secondary" onClick={()=>setValues(defaults)}><RotateCcw size={18}/>初期値に戻す</button></div>
       <div className="condition-groups">{fieldGroups.map(group=><fieldset key={group.title}><legend>{group.title}</legend><p>{group.description}</p><div className="group-fields">{group.fields.map(field=><label key={field.key} className={errors[field.key]?'invalid':''}><span>{field.label} <small>（<VariableLink target={`def-${field.key}`}>{field.symbol}</VariableLink>）</small></span><div className="input-wrap"><input type="number" step={field.step} value={values[field.key]} onChange={e=>setValues(v=>({...v,[field.key]:e.target.value}))}/><b>{field.unit}</b></div><small className="field-help">{field.help}</small>{errors[field.key]&&<em>{errors[field.key]}</em>}</label>)}</div></fieldset>)}</div>
@@ -249,17 +247,4 @@ function Calculator({ onLogout }: { onLogout: () => void }) {
       <DefinitionGuide/>
     </>:<div className="error-banner">入力内容を修正すると、計算結果が表示されます。</div>}
   </main><footer>昇降ストローク計算ツール <span>•</span> 計算はすべてブラウザ内で実行されます</footer></>
-}
-
-export default function App() {
-  // 初回アクセス時のみログイン画面を表示し、localStorageに記録が残っていれば省略する。
-  const [loggedIn, setLoggedIn] = useState(isLoggedIn)
-
-  const logout = () => {
-    clearLogin()
-    setLoggedIn(false)
-  }
-
-  if (!loggedIn) return <LoginScreen onSuccess={() => setLoggedIn(true)} />
-  return <Calculator onLogout={logout} />
 }
